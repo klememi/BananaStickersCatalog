@@ -21,12 +21,19 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- scotty
+- blaze-html
+- sqlite-simple
+- wai-middleware-static
+- time
+- text
+- SHA
 
 library:
   source-dirs: src
 
 executables:
-  Banana-exe:
+  banana:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -37,7 +44,7 @@ executables:
     - Banana
 
 tests:
-  Banana-test:
+  banana-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:

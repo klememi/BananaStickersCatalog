@@ -6,7 +6,20 @@
 <title>Banana Stickers Catalog</title>
 <meta name="description" content="Banana Stickers Catalog">
 <meta name="author" content="Michal Klement">
-<link rel="stylesheet" href="css/bulma.css">
+<link rel="stylesheet" href="static/css/bulma.css">
+<!-- <script src="https://www.gstatic.com/firebasejs/5.0.2/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyA9hj2EdGWPIH5nvI0MXcqe9nrRiI9x4z0",
+    authDomain: "bananastickers-21512.firebaseapp.com",
+    databaseURL: "https://bananastickers-21512.firebaseio.com",
+    projectId: "bananastickers-21512",
+    storageBucket: "",
+    messagingSenderId: "37820646743"
+  };
+  firebase.initializeApp(config);
+</script> -->
 <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/all.js" integrity="sha384-xymdQtn1n3lH2wcu0qhcdaOpQwyoarkgLVxC/wZ5q7h9gHtxICrpcaSUfygqZGOe" crossorigin="anonymous"></script>
 </head>
 <!-- BODY -->
@@ -37,15 +50,46 @@
                 </p>
               </div>
             </span>
-            <a class="navbar-item">
+            <a class="navbar-item" onclick='(function() {document.getElementById("addModal").classList.add("is-active");})();'>
               <span class="icon is-medium">
                 <i class="fas fa-lg fa-plus-square"></i>
               </span>
             </a>
             <a class="navbar-item">
-              <span class="icon is-medium">
-                <i class="fas fa-lg fa-sign-in-alt"></i>
-              </span>
+              <div class="dropdown is-hoverable is-right">
+                <div class="dropdown-trigger">
+                    <span class="icon is-medium" aria-haspopup="true" aria-controls="dropdown-menu4">
+                      <i class="fas fa-lg fa-sign-in-alt"></i>
+                    </span>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu4" role="menu">
+                  <div class="dropdown-content">
+                    <div class="dropdown-item">
+                      <div class="field">
+                        <p class="control has-icons-left">
+                          <input class="input is-small" type="text" placeholder="Name">
+                          <span class="icon is-small is-left">
+                            <i class="fas fa-user"></i>
+                          </span>
+                        </p>
+                      </div>
+                      <div class="field">
+                        <p class="control has-icons-left">
+                          <input class="input is-small" type="password" placeholder="Password">
+                          <span class="icon is-small is-left">
+                            <i class="fas fa-lock"></i>
+                          </span>
+                        </p>
+                      </div>
+                      <div class="field">
+                        <p class="control">
+                          <button class="button is-small is-warning is-fullwidth">Login</button>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </a>
           </div>
         </div>
@@ -70,14 +114,18 @@
         </div>
         <div class="level-item has-text-centered">
           <div>
-            <p class="heading">Brands</p>
-            <p class="title">112</p>
+            <a>
+              <p class="heading">Brands</p>
+              <p class="title">112</p>
+            </a>
           </div>
         </div>
         <div class="level-item has-text-centered">
           <div>
-            <p class="heading">Countries of origin</p>
-            <p class="title">39</p>
+            <a>
+              <p class="heading">Countries of origin</p>
+              <p class="title">39</p>
+            </a>
           </div>
         </div>
         <div class="level-item has-text-centered">
@@ -93,134 +141,223 @@
 
 <section class="section">
   <div class="container is-desktop">
-  <div class="tile is-ancestor">
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">One</p>
-  <p class="subtitle">Subtitle</p>
-  </article>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Two</p>
-  <p class="subtitle">Subtitle</p>
-  </article>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Three</p>
-  <p class="subtitle">Subtitle</p>
-  </article>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Four</p>
-  <p class="subtitle">Subtitle</p>
-  </article>
-  </div>
-  </div>
+    <div class="tile is-ancestor">
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+    </div>
 
-  <div class="tile is-ancestor">
-  <div class="tile is-vertical is-9">
-  <div class="tile">
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Five</p>
-  <p class="subtitle">Subtitle</p>
-  <div class="content">
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam semper diam at erat pulvinar, at pulvinar felis blandit. Vestibulum volutpat tellus diam, consequat gravida libero rhoncus ut. Morbi maximus, leo sit amet vehicula eleifend, nunc dui porta orci, quis semper odio felis ut quam.</p>
-  </div>
-  </article>
-  </div>
-  <div class="tile is-8 is-vertical">
-  <div class="tile">
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Six</p>
-  <p class="subtitle">Subtitle</p>
-  </article>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Seven</p>
-  <p class="subtitle">Subtitle</p>
-  </article>
-  </div>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Eight</p>
-  <p class="subtitle">Subtitle</p>
-  </article>
-  </div>
-  </div>
-  </div>
-  <div class="tile">
-  <div class="tile is-8 is-parent">
-  <article class="tile is-child box">
-  <p class="title">Nine</p>
-  <p class="subtitle">Subtitle</p>
-  <div class="content">
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ornare magna eros, eu pellentesque tortor vestibulum ut. Maecenas non massa sem. Etiam finibus odio quis feugiat facilisis.</p>
-  </div>
-  </article>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Ten</p>
-  <p class="subtitle">Subtitle</p>
-  <div class="content">
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ornare magna eros, eu pellentesque tortor vestibulum ut. Maecenas non massa sem. Etiam finibus odio quis feugiat facilisis.</p>
-  </div>
-  </article>
-  </div>
-  </div>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <div class="content">
-  <p class="title">Eleven</p>
-  <p class="subtitle">Subtitle</p>
-  <div class="content">
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam semper diam at erat pulvinar, at pulvinar felis blandit. Vestibulum volutpat tellus diam, consequat gravida libero rhoncus ut. Morbi maximus, leo sit amet vehicula eleifend, nunc dui porta orci, quis semper odio felis ut quam.</p>
-  <p>Integer sollicitudin, tortor a mattis commodo, velit urna rhoncus erat, vitae congue lectus dolor consequat libero. Donec leo ligula, maximus et pellentesque sed, gravida a metus. Cras ullamcorper a nunc ac porta. Aliquam ut aliquet lacus, quis faucibus libero. Quisque non semper leo.</p>
-  </div>
-  </div>
-  </article>
-  </div>
-  </div>
-
-  <div class="tile is-ancestor">
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Twelve</p>
-  <p class="subtitle">Subtitle</p>
-  <div class="content">
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ornare magna eros, eu pellentesque tortor vestibulum ut.</p>
-  </div>
-  </article>
-  </div>
-  <div class="tile is-parent is-6">
-  <article class="tile is-child box">
-  <p class="title">Thirteen</p>
-  <p class="subtitle">Subtitle</p>
-  <div class="content">
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ornare magna eros, eu pellentesque tortor vestibulum ut. Maecenas non massa sem. Etiam finibus odio quis feugiat facilisis.</p>
-  </div>
-  </article>
-  </div>
-  <div class="tile is-parent">
-  <article class="tile is-child box">
-  <p class="title">Fourteen</p>
-  <p class="subtitle">Subtitle</p>
-  <div class="content">
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ornare magna eros, eu pellentesque tortor vestibulum ut.</p>
-  </div>
-  </article>
-  </div>
-  </div>
+<div class="tile is-ancestor">
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+    </div>
+    <div class="tile is-ancestor">
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <center>
+            <figure class="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/256x256.png">
+            </figure>
+          </center>
+        </article>
+      </div>
+    </div>
   </div>
 </section>
+
+<div class="modal" id="addModal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Add new sticker</p>
+      <button class="delete" aria-label="close" onclick='(function() {document.getElementById("addModal").classList.remove("is-active");})();'></button>
+    </header>
+    <section class="modal-card-body">
+      <div class="container is-fluid">
+        <form action="#" onsubmit="(function() {alert(brand.value);})();" method="post" id="addForm">
+        <div class="field">
+          <label class="label">Picture</label>
+          <div class="file is-small has-name is-fullwidth">
+            <label class="file-label">
+              <input class="file-input" type="file" name="resume">
+              <span class="file-cta">
+                <span class="file-icon">
+                  <i class="fas fa-upload"></i>
+                </span>
+                <span class="file-label">
+                  Browse files
+                </span>
+              </span>
+              <span class="file-name">
+                Screen Shot 2017-07-29 at 15.54.25.png
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Brand</label>
+          <div class="control">
+            <input class="input is-small" type="text" placeholder="what brand it is?" name="brand">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Country</label>
+          <div class="control">
+            <div class="select is-small is-fullwidth">
+              <select>
+                <option>Panama</option>
+                <option>other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Founder</label>
+          <div class="control">
+            <input class="input is-small" type="text" placeholder="who found it?" name="founder">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Note</label>
+          <div class="control">
+            <textarea class="textarea is-small" type="text" placeholder="some special note or story which led to this sticker" rows="4"></textarea>
+          </div>
+        </div>
+      </form>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-success" type="submit" form="addForm">Add</button>
+      <button class="button" onclick='(function() {document.getElementById("addModal").classList.remove("is-active");})();'>Cancel</button>
+    </footer>
+  </div>
+</div>
+
 </body>
 <!-- FOOTER -->
 <footer class="footer">

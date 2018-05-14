@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<!-- HEAD -->
+<head>
+<meta charset="utf-8">
+<title>Banana Stickers Catalog</title>
+<meta name="description" content="Banana Stickers Catalog">
+<meta name="author" content="Michal Klement">
+<link rel="stylesheet" href="css/bulma.css">
+<link rel="stylesheet" href="css/flag-icon.css">
+<!-- <script src="https://www.gstatic.com/firebasejs/5.0.2/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyA9hj2EdGWPIH5nvI0MXcqe9nrRiI9x4z0",
+    authDomain: "bananastickers-21512.firebaseapp.com",
+    databaseURL: "https://bananastickers-21512.firebaseio.com",
+    projectId: "bananastickers-21512",
+    storageBucket: "",
+    messagingSenderId: "37820646743"
+  };
+  firebase.initializeApp(config);
+</script> -->
+<script defer src="https://use.fontawesome.com/releases/v5.0.13/js/all.js" integrity="sha384-xymdQtn1n3lH2wcu0qhcdaOpQwyoarkgLVxC/wZ5q7h9gHtxICrpcaSUfygqZGOe" crossorigin="anonymous"></script>
+</head>
+<!-- BODY -->
+<body>
+<section class="hero is-warning is-bold">
+  <div class="hero-head">
+    <header class="navbar">
+      <div class="container">
+        <div class="navbar-brand">
+          <a class="navbar-item">
+          Logo will be here
+          </a>
+          <span class="navbar-burger burger" data-target="navbarMenuHeroC">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </div>
+        <div id="navbarMenuHeroC" class="navbar-menu">
+          <div class="navbar-end">
+            <span class="navbar-item">
+              <div class="field">
+                <p class="control has-icons-left">
+                  <input class="input" type="text" placeholder="Search">
+                  <span class="icon is-small is-left">
+                    <i class="fas fa-search"></i>
+                  </span>
+                </p>
+              </div>
+            </span>
+            <a class="navbar-item">
+              <span class="icon is-medium">
+                <i class="fas fa-lg fa-plus-square"></i>
+              </span>
+            </a>
+            <a class="navbar-item">
+              <span class="icon is-medium">
+                <i class="fas fa-lg fa-sign-in-alt"></i>
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <div class="hero-body">
+    <div class="container">
+      <h1 class="title">
+        Banana Stickers Catalog
+      </h1>
+      <h2 class="subtitle">
+        MI-AFP semestral project by Michal Klement
+      </h2>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Stickers</p>
+            <p class="title">566</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <a>
+              <p class="heading">Brands</p>
+              <p class="title">112</p>
+            </a>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <a>
+              <p class="heading">Countries of origin</p>
+              <p class="title">39</p>
+            </a>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Visits</p>
+            <p class="title">789</p>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-desktop">
+    <table class="table is-striped is-narrow is-fullwidth">
+      <thead><tr><th>A</th></tr></thead>
+      <tbody>
+        <tr><td><a class="link">Albert</a></td></tr>
+      </tbody>
+      <thead><tr><th>B</th></tr></thead>
+      <thead><tr><th>C</th></tr></thead>
+      <tbody>
+        <tr><td><a class="link">Chiquita</a></td></tr>
+        <tr><td><a class="link">Cobana</a></td></tr>
+      </tbody>
+      <thead><tr><th>D</th></tr></thead>
+      <thead><tr><th>E</th></tr></thead>
+      <thead><tr><th>F</th></tr></thead>
+      <thead><tr><th>G</th></tr></thead>
+      <thead><tr><th>H</th></tr></thead>
+      <thead><tr><th>I</th></tr></thead>
+      <thead><tr><th>J</th></tr></thead>
+      <thead><tr><th>K</th></tr></thead>
+      <thead><tr><th>L</th></tr></thead>
+      <thead><tr><th>M</th></tr></thead>
+      <thead><tr><th>N</th></tr></thead>
+      <thead><tr><th>O</th></tr></thead>
+      <thead><tr><th>P</th></tr></thead>
+      <thead><tr><th>Q</th></tr></thead>
+      <thead><tr><th>R</th></tr></thead>
+      <thead><tr><th>S</th></tr></thead>
+      <thead><tr><th>T</th></tr></thead>
+      <thead><tr><th>U</th></tr></thead>
+      <thead><tr><th>V</th></tr></thead>
+      <thead><tr><th>W</th></tr></thead>
+      <thead><tr><th>X</th></tr></thead>
+      <thead><tr><th>Y</th></tr></thead>
+      <thead><tr><th>Z</th></tr></thead>
+    </table>
+  </div>
+</section>
+
+<div class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Add new sticker</p>
+      <button class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+      <div class="container is-fluid">
+        <div class="field">
+          <label class="label">Picture</label>
+          <div class="file is-small has-name is-fullwidth">
+            <label class="file-label">
+              <input class="file-input" type="file" name="resume">
+              <span class="file-cta">
+                <span class="file-icon">
+                  <i class="fas fa-upload"></i>
+                </span>
+                <span class="file-label">
+                  Browse files
+                </span>
+              </span>
+              <span class="file-name">
+                Screen Shot 2017-07-29 at 15.54.25.png
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Brand</label>
+          <div class="control">
+            <input class="input is-small" type="text" placeholder="what brand it is?">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Country</label>
+          <div class="control">
+            <div class="select is-small is-fullwidth">
+              <select>
+                <option>Panama</option>
+                <option>other countries</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Founder</label>
+          <div class="control">
+            <input class="input is-small" type="text" placeholder="who found it?">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Note</label>
+          <div class="control">
+            <textarea class="textarea is-small" type="text" placeholder="some special note or story which led to this sticker" rows="4"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-success">Add</button>
+      <button class="button">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+</body>
+<!-- FOOTER -->
+<footer class="footer">
+<div class="container">
+  <div class="content has-text-centered">
+    <p>
+      <a href="https://bulma.io">
+        <img src="https://bulma.io/images/made-with-bulma--semiblack.png" alt="Made with Bulma" width="128" height="24">
+      </a>
+    </p>
+  </div>
+</div>
+</footer>
+
+</html>
