@@ -1,43 +1,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Banana(catalog) where
 
-import Prelude
-import qualified Prelude as P
+import Prelude as P
+import Country
+import Sticker as ST
+import Stats
+import Brand
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import Data.Monoid (mempty)
 import Control.Monad.IO.Class (liftIO)
-import Data.List
-import Helpers
+import Data.List(group, sort, groupBy)
 import Database.SQLite.Simple as SQL
-import Text.Blaze.Html5
-import qualified Text.Blaze.Html5 as H
-import Text.Blaze.Html5.Attributes
-import qualified Text.Blaze.Html5.Attributes as A
+import Text.Blaze.Html5 as H
+import Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Web.Scotty as S
 import Network.Wai.Middleware.Static
 import Data.Digest.Pure.SHA
--- import Data.Time.Clock
--- import Data.Time.Calendar
--- import Data.Time.LocalTime
+import qualified Data.ByteString.Base64 as B64
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Char8 as C8
+import Network.Wai.Parse
 
-data Sticker = Sticker { id :: Int
-                       , pic :: String
-                       , brand :: String
-                       , country :: String
-                       , founder :: String
-                       , note :: String
-                       , tags :: String
-                       }
-
-instance FromRow Sticker where
-    fromRow = Sticker <$> field <*> field <*> field <*> field <*> field <*> field <*> field
-
-data Stats = Stats { stickersCount :: Int
-                   , uniqBrands :: [String]
-                   , uniqCountries :: [String]
-                   }
+data Page = Index
+          | Countries
+          | Brands
 
 catalog :: IO()
 catalog = do
@@ -47,22 +36,22 @@ catalog = do
         get "/" $ do
             stickers <- liftIO $ query_ conn "SELECT * from stickers"
             let stickersCount = length stickers
-            let uniqBrands = getUniqBrands stickers
-            let uniqCountries = getUniqCountries stickers
+            let uniqBrands = unique brand stickers
+            let uniqCountries = unique country stickers
             let currentStats = Stats stickersCount uniqBrands uniqCountries
             renderPage Index currentStats
         get "/brands" $ do
             stickers <- liftIO $ query_ conn "SELECT * from stickers"
             let stickersCount = length stickers
-            let uniqBrands = getUniqBrands stickers
-            let uniqCountries = getUniqCountries stickers
+            let uniqBrands = unique brand stickers
+            let uniqCountries = unique country stickers
             let currentStats = Stats stickersCount uniqBrands uniqCountries
             renderPage Brands currentStats
         get "/countries" $ do
             stickers <- liftIO $ query_ conn "SELECT * from stickers"
             let stickersCount = length stickers
-            let uniqBrands = getUniqBrands stickers
-            let uniqCountries = getUniqCountries stickers
+            let uniqBrands = unique brand stickers
+            let uniqCountries = unique country stickers
             let currentStats = Stats stickersCount uniqBrands uniqCountries
             renderPage Countries currentStats
         post "/addSticker" $ do
@@ -70,7 +59,12 @@ catalog = do
             country <- S.param "country"
             founder <- S.param "founder"
             note <- S.param "note"
-            liftIO $ execute conn "INSERT INTO stickers(brand, country, founder, note) VALUES (?, ?, ?, ?)" (brand :: String, country :: String, founder :: String, note :: String)
+            fs <- files
+            let pics = [fileContent fi | (_, fi) <- fs]
+            let pic = BL.toStrict $ pics !! 0
+            let encodedPic = C8.unpack $ B64.encode pic
+            let tags = "tag"
+            liftIO $ execute conn "INSERT INTO stickers(pic, brand, country, founder, note, tags) VALUES (?, ?, ?, ?, ?, ?)" (encodedPic :: String, brand :: String, country :: String, founder :: String, note :: String, tags :: String)
             S.redirect "/"
     close conn
         -- get "/country/:country" $ do
@@ -80,211 +74,18 @@ catalog = do
         --     brand <- S.param "brand"
         --     renderPage (Brand brand) initial
 
--- renderPage :: Page -> ActionM()
-renderPage Index stats             = S.html . renderHtml $ getPage getStickers stats
-renderPage Countries stats         = S.html . renderHtml $ getPage (getCountries $ uniqCountries stats) stats
-renderPage Brands stats            = S.html . renderHtml $ getPage (getBrands $ uniqBrands stats) stats
+renderPage :: Page -> Stats -> ActionM()
+renderPage Index stats     = getPage stickersContent stats
+renderPage Countries stats = getPage (countriesHtml $ uniqCountries stats) stats
+renderPage Brands stats    = getPage (brandsHtml $ uniqBrands stats) stats
 -- renderPage (Country country) state = S.html . renderHtml $ countryPage country state
 -- renderPage (Brand brand) state     = S.html . renderHtml $ brandPage brand state
 
-getUniqCountries stickers = P.map (\x -> x !! 0) $ group $ sort $ P.map country stickers
+unique :: (Sticker -> String) -> [Sticker] -> [[String]]
+unique element stickers = groupBy (\x y -> x !! 0 == y !! 0) $ P.map (\x -> x !! 0) $ group $ sort $ P.map element stickers
 
-getUniqBrands stickers = P.map (\x -> x !! 0) $ group $ sort $ P.map brand stickers
-
-getCountriesOptions :: Html
-getCountriesOptions = mconcat $ P.map (\x -> option $ toHtml x) countries
-
-getCountries :: [String] -> Html
-getCountries countries = table ! class_ "table is-striped is-narrow is-hoverable is-fullwidth" $ do
-                            thead $ tr $ th "A"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "A" x) countries)
-                            thead $ tr $ th "B"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "B" x) countries)
-                            thead $ tr $ th "C"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "C" x) countries)
-                            thead $ tr $ th "D"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "D" x) countries)
-                            thead $ tr $ th "E"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "E" x) countries)
-                            thead $ tr $ th "F"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "F" x) countries)
-                            thead $ tr $ th "G"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "G" x) countries)
-                            thead $ tr $ th "H"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "H" x) countries)
-                            thead $ tr $ th "I"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "I" x) countries)
-                            thead $ tr $ th "J"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "J" x) countries)
-                            thead $ tr $ th "K"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "K" x) countries)
-                            thead $ tr $ th "L"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "L" x) countries)
-                            thead $ tr $ th "M"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "M" x) countries)
-                            thead $ tr $ th "N"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "N" x) countries)
-                            thead $ tr $ th "O"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "O" x) countries)
-                            thead $ tr $ th "P"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "P" x) countries)
-                            thead $ tr $ th "Q"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "Q" x) countries)
-                            thead $ tr $ th "R"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "R" x) countries)
-                            thead $ tr $ th "S"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "S" x) countries)
-                            thead $ tr $ th "T"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "T" x) countries)
-                            thead $ tr $ th "U"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "U" x) countries)
-                            thead $ tr $ th "V"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "V" x) countries)
-                            thead $ tr $ th "W"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "W" x) countries)
-                            thead $ tr $ th "X"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "X" x) countries)
-                            thead $ tr $ th "Y"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "Y" x) countries)
-                            thead $ tr $ th "Z"
-                            tbody $ do
-                                mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/country/" ++ x) $ do H.span ! class_ "flag-icon flag-icon-fr" $ mempty $ toHtml x) (filter (\x -> isPrefixOf "Z" x) countries)
-                
-                -- tbody $ tr $ td $ a ! class_ "link" $ do
-                --     H.span ! class_ "flag-icon flag-icon-fr" $ mempty
-                --     " France"
-
-getBrands :: [String] -> Html
-getBrands brands = table ! class_ "table is-striped is-narrow is-fullwidth" $ do
-                    thead $ tr $ th "A"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "A" x) brands)
-                    thead $ tr $ th "B"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "B" x) brands)
-                    thead $ tr $ th "C"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "C" x) brands)
-                    thead $ tr $ th "D"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "D" x) brands)
-                    thead $ tr $ th "E"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "E" x) brands)
-                    thead $ tr $ th "F"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "F" x) brands)
-                    thead $ tr $ th "G"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "G" x) brands)
-                    thead $ tr $ th "H"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "H" x) brands)
-                    thead $ tr $ th "I"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "I" x) brands)
-                    thead $ tr $ th "J"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "J" x) brands)
-                    thead $ tr $ th "K"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "K" x) brands)
-                    thead $ tr $ th "L"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "L" x) brands)
-                    thead $ tr $ th "M"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "M" x) brands)
-                    thead $ tr $ th "N"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "N" x) brands)
-                    thead $ tr $ th "O"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "O" x) brands)
-                    thead $ tr $ th "P"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "P" x) brands)
-                    thead $ tr $ th "Q"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "Q" x) brands)
-                    thead $ tr $ th "R"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "R" x) brands)
-                    thead $ tr $ th "S"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "S" x) brands)
-                    thead $ tr $ th "T"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "T" x) brands)
-                    thead $ tr $ th "U"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "U" x) brands)
-                    thead $ tr $ th "V"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "V" x) brands)
-                    thead $ tr $ th "W"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "W" x) brands)
-                    thead $ tr $ th "X"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "X" x) brands)
-                    thead $ tr $ th "Y"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "Y" x) brands)
-                    thead $ tr $ th "Z"
-                    tbody $ do
-                        mconcat $ P.map (\x -> tr $ td $ a ! class_ "link" ! (href $ toValue $ "/brand/" ++ x) $ toHtml x) (filter (\x -> isPrefixOf "Z" x) brands)
-
--- getBrandsCount :: Html
-getBrandsCount stickers = length $ group $ sort $ P.map brand stickers
-
--- getStickers :: Html
-getStickers = H.div ! class_ "tile is-ancestor" $ do
-                    H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                    H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                    H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                    H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                    H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                    H.div ! class_ "tile is-ancestor" $ do
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                    H.div ! class_ "tile is-ancestor" $ do
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-                        H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
-
--- getPage :: Html -> Html
-getPage getContent stats = do
+getPage :: Html -> Stats -> ActionM()
+getPage getContent stats = S.html . renderHtml $ do
         docTypeHtml ! lang "en" $ do
             --  HEAD
             H.head $ do
@@ -324,7 +125,7 @@ getPage getContent stats = do
                         h1 ! class_ "title" $ "Banana Stickers Catalog"
                         h2 ! class_ "subtitle" $ "MI-AFP semestral project by Michal Klement"
                         nav ! class_ "level" $ do
-                            H.div ! class_ "level-item has-text-centered" $ H.div $ do
+                            H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/" $ do
                                 p ! class_ "heading" $ "Stickers"
                                 p ! class_ "title" $ toHtml $ show $ stickersCount stats
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/brands" $ do
@@ -333,33 +134,28 @@ getPage getContent stats = do
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/countries" $ do
                                 p ! class_ "heading" $ "Countries of origin"
                                 p ! class_ "title" $ toHtml $ show $ length $ uniqCountries stats
-                            -- H.div ! class_ "level-item has-text-centered" $ H.div $ do
-                            --     p ! class_ "heading" $ "Visits"
-                            --     p ! class_ "title" $ "789"
-                section ! class_ "section" $ H.div ! class_ "container is-desktop" $ do
-                    getContent
+                section ! class_ "section" $ H.div ! class_ "container is-desktop" $ getContent
                 H.div ! class_ "modal" ! A.id "addModal" $ do
                     H.div ! class_ "modal-background" $ mempty
                     H.div ! class_ "modal-card" $ do
                         H.header ! class_ "modal-card-head" $ do
                             p ! class_ "modal-card-title" $ "Add new sticker"
                             button ! class_ "delete" ! onclick "(function() {document.getElementById(\"addModal\").classList.remove(\"is-active\");})();" $ mempty
-                        section ! class_ "modal-card-body" $ H.div ! class_ "container is-fluid" $ H.form ! action "/addSticker" ! method "post" ! A.id "addForm" $ do
+                        section ! class_ "modal-card-body" $ H.div ! class_ "container is-fluid" $ H.form ! action "/addSticker" ! method "post" ! enctype "multipart/form-data" ! A.id "addForm" $ do
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Picture"
                                 H.div ! class_ "file is-small has-name is-fullwidth" $ H.label ! class_ "file-label" $ do
-                                    input ! class_ "file-input" ! type_ "file" ! A.name "pic"
+                                    input ! class_ "file-input" ! type_ "file" ! A.id "file" ! A.name "file" ! accept ".jpg, .jpeg, .png" ! onchange "(function() {document.getElementById(\"filename\").innerHTML = document.getElementById(\"file\").files[0].name;})();"
                                     H.span ! class_ "file-cta" $ do
                                         H.span ! class_ "file-icon" $ i ! class_ "fas fa-upload" $ mempty
                                         H.span ! class_ "file-label" $ "Browse files"
-                                    H.span ! class_ "file-name" $ "Screen Shot 2017-07-29 at 15.54.25.png"
+                                    H.span ! class_ "file-name" ! A.id "filename" $ mempty
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Brand"
                                 H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "what brand it is?" ! A.name "brand"
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Country"
-                                H.div ! class_ "control" $ H.div ! class_ "select is-small is-fullwidth" $ select ! A.name "country" $ do
-                                    getCountriesOptions
+                                H.div ! class_ "control" $ H.div ! class_ "select is-small is-fullwidth" $ select ! A.name "country" $ countriesList
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Founder"
                                 H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "who found it?" ! A.name "founder"
