@@ -101,7 +101,9 @@ getPage getContent stats = S.html . renderHtml $ do
                 section ! class_ "hero is-warning is-bold" $ do
                     H.div ! class_ "hero-head" $ H.header ! class_ "navbar" $ H.div ! class_ "container" $ do
                         H.div ! class_ "navbar-brand" $ do
-                            a ! class_ "navbar-item" ! href "/" $ "Logo will be here"
+                            a ! class_ "navbar-item" ! href "/" $ do
+                                H.span ! class_ "icon is-medium" $ i ! class_ "far fa-sticky-note" $ mempty
+                                "Banana stickers"
                             H.span ! class_ "navbar-burger burger" ! dataAttribute "target" "navbarMenuHeroC" $ do
                                 H.span mempty
                                 H.span mempty
