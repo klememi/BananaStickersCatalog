@@ -35,25 +35,25 @@ catalog = do
         middleware $ staticPolicy (noDots >-> addBase "static")
         get "/" $ do
             stickers <- liftIO $ query_ conn "SELECT * from stickers"
-            let stickersCount = length stickers
-            let uniqBrands = unique brand stickers
-            let uniqCountries = unique country stickers
-            let currentStats = Stats stickersCount uniqBrands uniqCountries
-            renderPage Index currentStats
+            -- let stickersCount = length stickers
+            -- let uniqBrands = unique brand stickers
+            -- let uniqCountries = unique country stickers
+            -- let currentStats = Stats stickersCount uniqBrands uniqCountries
+            renderPage Index stickers
         get "/brands" $ do
             stickers <- liftIO $ query_ conn "SELECT * from stickers"
-            let stickersCount = length stickers
-            let uniqBrands = unique brand stickers
-            let uniqCountries = unique country stickers
-            let currentStats = Stats stickersCount uniqBrands uniqCountries
-            renderPage Brands currentStats
+            -- let stickersCount = length stickers
+            -- let uniqBrands = unique brand stickers
+            -- let uniqCountries = unique country stickers
+            -- let currentStats = Stats stickersCount uniqBrands uniqCountries
+            renderPage Brands stickers
         get "/countries" $ do
             stickers <- liftIO $ query_ conn "SELECT * from stickers"
-            let stickersCount = length stickers
-            let uniqBrands = unique brand stickers
-            let uniqCountries = unique country stickers
-            let currentStats = Stats stickersCount uniqBrands uniqCountries
-            renderPage Countries currentStats
+            -- let stickersCount = length stickers
+            -- let uniqBrands = unique brand stickers
+            -- let uniqCountries = unique country stickers
+            -- let currentStats = Stats stickersCount uniqBrands uniqCountries
+            renderPage Countries stickers
         post "/addSticker" $ do
             brand <- S.param "brand"
             country <- S.param "country"
@@ -74,17 +74,17 @@ catalog = do
         --     brand <- S.param "brand"
         --     renderPage (Brand brand) initial
 
-renderPage :: Page -> Stats -> ActionM()
-renderPage Index stats     = getPage stickersContent stats
-renderPage Countries stats = getPage (countriesHtml $ uniqCountries stats) stats
-renderPage Brands stats    = getPage (brandsHtml $ uniqBrands stats) stats
+renderPage :: Page -> [Sticker] -> ActionM()
+renderPage Index stats     = getPage (stickersContent stats) stats
+renderPage Countries stats = getPage (countriesHtml $ unique country stats) stats
+renderPage Brands stats    = getPage (brandsHtml $ unique brand stats) stats
 -- renderPage (Country country) state = S.html . renderHtml $ countryPage country state
 -- renderPage (Brand brand) state     = S.html . renderHtml $ brandPage brand state
 
 unique :: (Sticker -> String) -> [Sticker] -> [[String]]
 unique element stickers = groupBy (\x y -> x !! 0 == y !! 0) $ P.map (\x -> x !! 0) $ group $ sort $ P.map element stickers
 
-getPage :: Html -> Stats -> ActionM()
+getPage :: Html -> [Sticker] -> ActionM()
 getPage getContent stats = S.html . renderHtml $ do
         docTypeHtml ! lang "en" $ do
             --  HEAD
@@ -129,13 +129,13 @@ getPage getContent stats = S.html . renderHtml $ do
                         nav ! class_ "level" $ do
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/" $ do
                                 p ! class_ "heading" $ "Stickers"
-                                p ! class_ "title" $ toHtml $ show $ stickersCount stats
+                                p ! class_ "title" $ toHtml $ show $ length stats
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/brands" $ do
                                 p ! class_ "heading" $ "Brands"
-                                p ! class_ "title" $ toHtml $ show $ length $ uniqBrands stats
+                                p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique brand stats
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/countries" $ do
                                 p ! class_ "heading" $ "Countries of origin"
-                                p ! class_ "title" $ toHtml $ show $ length $ uniqCountries stats
+                                p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique country stats
                 section ! class_ "section" $ H.div ! class_ "container is-desktop" $ getContent
                 H.div ! class_ "modal" ! A.id "addModal" $ do
                     H.div ! class_ "modal-background" $ mempty
@@ -147,23 +147,23 @@ getPage getContent stats = S.html . renderHtml $ do
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Picture"
                                 H.div ! class_ "file is-small has-name is-fullwidth" $ H.label ! class_ "file-label" $ do
-                                    input ! class_ "file-input" ! type_ "file" ! A.id "file" ! A.name "file" ! accept ".jpg, .jpeg, .png" ! onchange "(function() {document.getElementById(\"filename\").innerHTML = document.getElementById(\"file\").files[0].name;})();"
+                                    input ! class_ "file-input" ! type_ "file" ! A.id "file" ! A.name "file" ! accept ".jpg, .jpeg, .png" ! onchange "(function() {document.getElementById(\"filename\").innerHTML = document.getElementById(\"file\").files[0].name;})();" ! required ""
                                     H.span ! class_ "file-cta" $ do
                                         H.span ! class_ "file-icon" $ i ! class_ "fas fa-upload" $ mempty
                                         H.span ! class_ "file-label" $ "Browse files"
                                     H.span ! class_ "file-name" ! A.id "filename" $ mempty
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Brand"
-                                H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "what brand it is?" ! A.name "brand"
+                                H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "what brand it is?" ! A.name "brand" ! required ""
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Country"
                                 H.div ! class_ "control" $ H.div ! class_ "select is-small is-fullwidth" $ select ! A.name "country" $ countriesList
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Founder"
-                                H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "who found it?" ! A.name "founder"
+                                H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "who found it?" ! A.name "founder" ! required ""
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Note"
-                                H.div ! class_ "control" $ textarea ! class_ "textarea is-small" ! A.name "note" ! type_ "text" ! placeholder "some special note or story which led to this sticker" ! rows "4" $ mempty
+                                H.div ! class_ "control" $ textarea ! class_ "textarea is-small" ! A.name "note" ! type_ "text" ! placeholder "some special note or story which led to this sticker" ! required "" ! rows "4" $ mempty
                         footer ! class_ "modal-card-foot" $ do
                             button ! class_ "button is-success" ! type_ "submit" ! A.form "addForm" $ "Add"
                             button ! class_ "button" ! onclick "(function() {document.getElementById(\"addModal\").classList.remove(\"is-active\");})();" $ "Cancel"

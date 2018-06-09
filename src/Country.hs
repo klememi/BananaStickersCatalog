@@ -2,7 +2,7 @@
 module Country(Country, countriesList, countriesHtml) where
 
 import Text.Blaze.Html5 as H
-import Text.Blaze.Html5.Attributes
+import Text.Blaze.Html5.Attributes as A
 import Prelude as P
 
 data Country = Country { name :: String
