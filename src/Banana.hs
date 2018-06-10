@@ -4,7 +4,6 @@ module Banana(catalog) where
 import Prelude as P
 import Country
 import Sticker as ST
-import Stats
 import Brand
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
@@ -27,6 +26,8 @@ import Network.Wai.Parse
 data Page = Index
           | Countries
           | Brands
+          | Country
+          | Brand
 
 catalog :: IO()
 catalog = do
@@ -34,58 +35,50 @@ catalog = do
     scotty 3000 $ do
         middleware $ staticPolicy (noDots >-> addBase "static")
         get "/" $ do
-            stickers <- liftIO $ query_ conn "SELECT * from stickers"
-            -- let stickersCount = length stickers
-            -- let uniqBrands = unique brand stickers
-            -- let uniqCountries = unique country stickers
-            -- let currentStats = Stats stickersCount uniqBrands uniqCountries
+            stickers <- liftIO $ query_ conn "select * from stickers"
             renderPage Index stickers
         get "/brands" $ do
-            stickers <- liftIO $ query_ conn "SELECT * from stickers"
-            -- let stickersCount = length stickers
-            -- let uniqBrands = unique brand stickers
-            -- let uniqCountries = unique country stickers
-            -- let currentStats = Stats stickersCount uniqBrands uniqCountries
+            stickers <- liftIO $ query_ conn "select * from stickers"
             renderPage Brands stickers
         get "/countries" $ do
-            stickers <- liftIO $ query_ conn "SELECT * from stickers"
-            -- let stickersCount = length stickers
-            -- let uniqBrands = unique brand stickers
-            -- let uniqCountries = unique country stickers
-            -- let currentStats = Stats stickersCount uniqBrands uniqCountries
+            stickers <- liftIO $ query_ conn "select * from stickers"
             renderPage Countries stickers
         post "/addSticker" $ do
-            brand <- S.param "brand"
+            brand   <- S.param "brand"
             country <- S.param "country"
             founder <- S.param "founder"
-            note <- S.param "note"
-            fs <- files
-            let pics = [fileContent fi | (_, fi) <- fs]
-            let pic = BL.toStrict $ pics !! 0
+            note    <- S.param "note"
+            fs      <- files
+            let pics       = [fileContent fi | (_, fi) <- fs]
+            let pic        = BL.toStrict $ pics !! 0
             let encodedPic = C8.unpack $ B64.encode pic
-            let tags = "tag"
-            liftIO $ execute conn "INSERT INTO stickers(pic, brand, country, founder, note, tags) VALUES (?, ?, ?, ?, ?, ?)" (encodedPic :: String, brand :: String, country :: String, founder :: String, note :: String, tags :: String)
+            let tags       = "tag"
+            liftIO $ execute conn "insert into stickers(pic, brand, country, founder, note, tags) values (?, ?, ?, ?, ?, ?)" (encodedPic :: String, brand :: String, country :: String, founder :: String, note :: String, tags :: String)
             S.redirect "/"
+        get "/country/:country" $ do
+            country <- S.param "country"
+            stickers <- liftIO $ query conn "select * from stickers where country = ?" [country :: String]
+            renderPage Index stickers
+        get "/brand/:brand" $ do
+            brand <- S.param "brand"
+            stickers <- liftIO $ query conn "select * from stickers where brand = ?" [brand :: String]
+            renderPage Index stickers
+        get "/search" $ do
+            keyword <- S.param "keyword"
+            stickers <- liftIO $ queryNamed conn "select * from stickers where brand = :k or country = :k or founder = :k or note = :k" [":k" := (keyword :: String)]
+            renderPage Index stickers
     close conn
-        -- get "/country/:country" $ do
-        --     country <- S.param "country"
-        --     renderPage (Country country) initial
-        -- get "/brand/:brand" $ do
-        --     brand <- S.param "brand"
-        --     renderPage (Brand brand) initial
 
 renderPage :: Page -> [Sticker] -> ActionM()
-renderPage Index stats     = getPage (stickersContent stats) stats
-renderPage Countries stats = getPage (countriesHtml $ unique country stats) stats
-renderPage Brands stats    = getPage (brandsHtml $ unique brand stats) stats
--- renderPage (Country country) state = S.html . renderHtml $ countryPage country state
--- renderPage (Brand brand) state     = S.html . renderHtml $ brandPage brand state
+renderPage Index stickers             = getPage (stickersContent stickers) stickers
+renderPage Countries stickers         = getPage (countriesHtml $ unique country stickers) stickers
+renderPage Brands stickers            = getPage (brandsHtml $ unique brand stickers) stickers
 
 unique :: (Sticker -> String) -> [Sticker] -> [[String]]
 unique element stickers = groupBy (\x y -> x !! 0 == y !! 0) $ P.map (\x -> x !! 0) $ group $ sort $ P.map element stickers
 
 getPage :: Html -> [Sticker] -> ActionM()
-getPage getContent stats = S.html . renderHtml $ do
+getPage getContent stickers = S.html . renderHtml $ do
         docTypeHtml ! lang "en" $ do
             --  HEAD
             H.head $ do
@@ -93,8 +86,8 @@ getPage getContent stats = S.html . renderHtml $ do
                 H.title "Banana Stickers Catalog"
                 meta ! A.name "description" ! content "Banana Stickers Catalog"
                 meta ! A.name "author" ! content "Michal Klement"
-                link ! rel "stylesheet" ! href "css/bulma.css"
-                link ! rel "stylesheet" ! href "css/flag-icon.css"
+                link ! rel "stylesheet" ! href "../css/bulma.css"
+                link ! rel "stylesheet" ! href "../css/flag-icon.css"
                 script ! defer "" ! src "https://use.fontawesome.com/releases/v5.0.13/js/all.js" $ mempty
             --  BODY
             H.body $ do
@@ -109,8 +102,8 @@ getPage getContent stats = S.html . renderHtml $ do
                                 H.span mempty
                                 H.span mempty
                         H.div ! A.id "navbarMenuHeroC" ! class_ "navbar-menu" $ H.div ! class_ "navbar-end" $ do
-                            H.span ! class_ "navbar-item" $ H.div ! class_ "field" $ p ! class_ "control has-icons-left" $ do
-                                input ! class_ "input" ! type_ "text" ! placeholder "Search"
+                            H.span ! class_ "navbar-item" $ H.div ! class_ "field" $ H.form ! action "/search" ! method "get" $ p ! class_ "control has-icons-left" $ do
+                                input ! class_ "input" ! type_ "text" ! A.name "keyword" ! placeholder "Search"
                                 H.span ! class_ "icon is-small is-left" $ i ! class_ "fas fa-search" $ mempty
                             a ! class_ "navbar-item" ! onclick "(function() {document.getElementById(\"addModal\").classList.add(\"is-active\");})();" $ H.span ! class_ "icon is-medium" $ i ! class_ "fas fa-lg fa-plus-square" $ mempty
                             a ! class_ "navbar-item" $ H.div ! class_ "dropdown is-hoverable is-right" $ do
@@ -129,13 +122,13 @@ getPage getContent stats = S.html . renderHtml $ do
                         nav ! class_ "level" $ do
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/" $ do
                                 p ! class_ "heading" $ "Stickers"
-                                p ! class_ "title" $ toHtml $ show $ length stats
+                                p ! class_ "title" $ toHtml $ show $ length stickers
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/brands" $ do
                                 p ! class_ "heading" $ "Brands"
-                                p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique brand stats
+                                p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique brand stickers
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/countries" $ do
                                 p ! class_ "heading" $ "Countries of origin"
-                                p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique country stats
+                                p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique country stickers
                 section ! class_ "section" $ H.div ! class_ "container is-desktop" $ getContent
                 H.div ! class_ "modal" ! A.id "addModal" $ do
                     H.div ! class_ "modal-background" $ mempty
