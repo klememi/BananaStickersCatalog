@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Sticker(Sticker(Sticker), Sticker.id, pic, brand, country, founder, note, tags, stickersContent) where
+module Sticker(Sticker(Sticker), Sticker.id, pic, brand, country, finder, note, tags, stickersContent) where
 
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
@@ -11,7 +11,7 @@ data Sticker = Sticker { id :: Int
                        , pic :: String
                        , brand :: String
                        , country :: String
-                       , founder :: String
+                       , finder :: String
                        , note :: String
                        , tags :: String
                        }
@@ -21,26 +21,17 @@ instance FromRow Sticker where
 
 stickersContent stickers = mconcat $ P.map (\x -> stickersGroup x) (chunksOf 5 stickers)
 
-stickersGroup group = H.div ! class_ "tile is-ancestor" $ mconcat $ P.map (\x -> stickerDiv x) group
+stickersGroup group = H.div ! class_ "columns" $ mconcat $ P.map (\x -> stickerDiv x) group
 
-stickerDiv sticker = H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src (toValue $ "data:image/png;base64, " ++ (pic sticker))
-
--- stickersContent :: [Sticker] -> Html
--- stickersContent stickers = H.div ! class_ "tile is-ancestor" $ do
---                     H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                     H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                     H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                     H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                     H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                     H.div ! class_ "tile is-ancestor" $ do
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                     H.div ! class_ "tile is-ancestor" $ do
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
---                         H.div ! class_ "tile is-parent" $ article ! class_ "tile is-child box" $ figure ! class_ "image is-128x128" $ img ! src "https://bulma.io/images/placeholders/256x256.png"
+stickerDiv sticker = H.div ! class_ "column is-one-fifth" $ figure ! class_ "image is-4by5" $ do
+                            img ! src (toValue $ "data:image/png;base64, " ++ (pic sticker))
+                            H.div ! class_ "overlay" $ H.div ! class_ "overlay-text" $ do
+                                H.div ! class_ "field" $ do
+                                    H.label ! class_ "label" $ "Brand"
+                                    toHtml $ brand sticker
+                                H.div ! class_ "field" $ do
+                                    H.label ! class_ "label" $ "Country"
+                                    toHtml $ country sticker
+                                H.div ! class_ "field" $ do
+                                    H.label ! class_ "label" $ "Finder"
+                                    toHtml $ finder sticker

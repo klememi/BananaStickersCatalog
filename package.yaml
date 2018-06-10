@@ -32,6 +32,7 @@ dependencies:
 - bytestring
 - wai-extra
 - split
+- random
 
 library:
   source-dirs: src

@@ -22,6 +22,8 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as C8
 import Network.Wai.Parse
+import System.Random (randomRIO)
+import System.IO.Unsafe
 
 data Page = Index
           | Countries
@@ -36,7 +38,8 @@ catalog = do
         middleware $ staticPolicy (noDots >-> addBase "static")
         get "/" $ do
             stickers <- liftIO $ query_ conn "select * from stickers"
-            renderPage Index stickers
+            let randomS = unsafePerformIO $ randomSample 12 stickers
+            renderPage Index randomS
         get "/brands" $ do
             stickers <- liftIO $ query_ conn "select * from stickers"
             renderPage Brands stickers
@@ -46,14 +49,14 @@ catalog = do
         post "/addSticker" $ do
             brand   <- S.param "brand"
             country <- S.param "country"
-            founder <- S.param "founder"
+            finder <- S.param "finder"
             note    <- S.param "note"
             fs      <- files
             let pics       = [fileContent fi | (_, fi) <- fs]
             let pic        = BL.toStrict $ pics !! 0
             let encodedPic = C8.unpack $ B64.encode pic
             let tags       = "tag"
-            liftIO $ execute conn "insert into stickers(pic, brand, country, founder, note, tags) values (?, ?, ?, ?, ?, ?)" (encodedPic :: String, brand :: String, country :: String, founder :: String, note :: String, tags :: String)
+            liftIO $ execute conn "insert into stickers(pic, brand, country, founder, note, tags) values (?, ?, ?, ?, ?, ?)" (encodedPic :: String, brand :: String, country :: String, finder :: String, note :: String, tags :: String)
             S.redirect "/"
         get "/country/:country" $ do
             country <- S.param "country"
@@ -76,6 +79,15 @@ renderPage Brands stickers            = getPage (brandsHtml $ unique brand stick
 
 unique :: (Sticker -> String) -> [Sticker] -> [[String]]
 unique element stickers = groupBy (\x y -> x !! 0 == y !! 0) $ P.map (\x -> x !! 0) $ group $ sort $ P.map element stickers
+
+randomSample :: Int -> [a] -> IO [a]
+randomSample 0 x = pure []
+randomSample k x = do
+   let m = P.min k (length x)
+   i <- randomRIO (0, length x - 1)
+   let (a, e:b) = splitAt i x
+   l <- randomSample (m-1) (a ++ b)
+   pure (e : l)
 
 getPage :: Html -> [Sticker] -> ActionM()
 getPage getContent stickers = S.html . renderHtml $ do
@@ -152,8 +164,8 @@ getPage getContent stickers = S.html . renderHtml $ do
                                 H.label ! class_ "label" $ "Country"
                                 H.div ! class_ "control" $ H.div ! class_ "select is-small is-fullwidth" $ select ! A.name "country" $ countriesList
                             H.div ! class_ "field" $ do
-                                H.label ! class_ "label" $ "Founder"
-                                H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "who found it?" ! A.name "founder" ! required ""
+                                H.label ! class_ "label" $ "Finder"
+                                H.div ! class_ "control" $ input ! class_ "input is-small" ! type_ "text" ! placeholder "who found it?" ! A.name "finder" ! required ""
                             H.div ! class_ "field" $ do
                                 H.label ! class_ "label" $ "Note"
                                 H.div ! class_ "control" $ textarea ! class_ "textarea is-small" ! A.name "note" ! type_ "text" ! placeholder "some special note or story which led to this sticker" ! required "" ! rows "4" $ mempty
@@ -162,4 +174,3 @@ getPage getContent stickers = S.html . renderHtml $ do
                             button ! class_ "button" ! onclick "(function() {document.getElementById(\"addModal\").classList.remove(\"is-active\");})();" $ "Cancel"
             --  FOOTER
             footer ! class_ "footer" $ H.div ! class_ "container" $ H.div ! class_ "content has-text-centered" $ p $ a ! href "https://bulma.io" $ img ! src "https://bulma.io/images/made-with-bulma--semiblack.png" ! alt "Made with Bulma" ! width "128" ! height "24"
-
