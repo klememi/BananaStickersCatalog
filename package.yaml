@@ -27,7 +27,6 @@ dependencies:
 - wai-middleware-static
 - time
 - text
-- SHA
 - base64-bytestring
 - bytestring
 - wai-extra

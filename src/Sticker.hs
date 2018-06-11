@@ -19,10 +19,13 @@ data Sticker = Sticker { id :: Int
 instance FromRow Sticker where
     fromRow = Sticker <$> field <*> field <*> field <*> field <*> field <*> field <*> field
 
+stickersContent :: [Sticker] -> Html
 stickersContent stickers = mconcat $ P.map (\x -> stickersGroup x) (chunksOf 5 stickers)
 
+stickersGroup :: [Sticker] -> Html
 stickersGroup group = H.div ! class_ "columns" $ mconcat $ P.map (\x -> stickerDiv x) group
 
+stickerDiv :: Sticker -> Html
 stickerDiv sticker = H.div ! class_ "column is-one-fifth" $ figure ! class_ "image is-4by5" $ do
                             img ! src (toValue $ "data:image/png;base64, " ++ (pic sticker))
                             H.div ! class_ "overlay" $ H.div ! class_ "overlay-text" $ do

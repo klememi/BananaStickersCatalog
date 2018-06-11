@@ -16,7 +16,6 @@ import Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Web.Scotty as S
 import Network.Wai.Middleware.Static
-import Data.Digest.Pure.SHA
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
@@ -28,8 +27,6 @@ import System.IO.Unsafe
 data Page = Index
           | Countries
           | Brands
-          | Country
-          | Brand
 
 catalog :: IO()
 catalog = do
@@ -38,7 +35,7 @@ catalog = do
         middleware $ staticPolicy (noDots >-> addBase "static")
         get "/" $ do
             stickers <- liftIO $ query_ conn "select * from stickers"
-            let randomS = unsafePerformIO $ randomSample 12 stickers
+            let randomS = unsafePerformIO $ randomSample 15 stickers
             renderPage Index randomS
         get "/brands" $ do
             stickers <- liftIO $ query_ conn "select * from stickers"
@@ -49,7 +46,7 @@ catalog = do
         post "/addSticker" $ do
             brand   <- S.param "brand"
             country <- S.param "country"
-            finder <- S.param "finder"
+            finder  <- S.param "finder"
             note    <- S.param "note"
             fs      <- files
             let pics       = [fileContent fi | (_, fi) <- fs]
@@ -73,9 +70,15 @@ catalog = do
     close conn
 
 renderPage :: Page -> [Sticker] -> ActionM()
-renderPage Index stickers             = getPage (stickersContent stickers) stickers
-renderPage Countries stickers         = getPage (countriesHtml $ unique country stickers) stickers
-renderPage Brands stickers            = getPage (brandsHtml $ unique brand stickers) stickers
+renderPage Index stickers     = getPage (stickersContent stickers) stickers
+renderPage Countries stickers = getPage (countriesHtml $ unique country stickers) stickers
+renderPage Brands stickers    = getPage (brandsHtml $ unique brand stickers) stickers
+
+getPage :: Html -> [Sticker] -> ActionM()
+getPage bodyContainerContent stickers = S.html . renderHtml $ do
+                                            headerContent
+                                            bodyContent bodyContainerContent stickers
+                                            footerContent
 
 unique :: (Sticker -> String) -> [Sticker] -> [[String]]
 unique element stickers = groupBy (\x y -> x !! 0 == y !! 0) $ P.map (\x -> x !! 0) $ group $ sort $ P.map element stickers
@@ -89,10 +92,9 @@ randomSample k x = do
    l <- randomSample (m-1) (a ++ b)
    pure (e : l)
 
-getPage :: Html -> [Sticker] -> ActionM()
-getPage getContent stickers = S.html . renderHtml $ do
-        docTypeHtml ! lang "en" $ do
-            --  HEAD
+-- header html content
+headerContent :: Html
+headerContent = docTypeHtml ! lang "en" $ do
             H.head $ do
                 meta ! charset "utf-8"
                 H.title "Banana Stickers Catalog"
@@ -101,34 +103,34 @@ getPage getContent stickers = S.html . renderHtml $ do
                 link ! rel "stylesheet" ! href "../css/bulma.css"
                 link ! rel "stylesheet" ! href "../css/flag-icon.css"
                 script ! defer "" ! src "https://use.fontawesome.com/releases/v5.0.13/js/all.js" $ mempty
-            --  BODY
-            H.body $ do
-                section ! class_ "hero is-warning is-bold" $ do
-                    H.div ! class_ "hero-head" $ H.header ! class_ "navbar" $ H.div ! class_ "container" $ do
+
+-- body html content
+bodyContent :: Html -> [Sticker] -> Html
+bodyContent bodyContainerContent stickers = H.body $ do
+                                                heroSection stickers
+                                                bodyContainer bodyContainerContent
+                                                addStickerModal
+
+heroSection :: [Sticker] -> Html
+heroSection stickers = section ! class_ "hero is-warning is-bold" $ do
+                            heroHeader
+                            heroBody stickers
+
+heroHeader :: Html
+heroHeader = H.div ! class_ "hero-head" $ H.header ! class_ "navbar" $ H.div ! class_ "container" $ do
                         H.div ! class_ "navbar-brand" $ do
                             a ! class_ "navbar-item" ! href "/" $ do
                                 H.span ! class_ "icon is-medium" $ i ! class_ "far fa-sticky-note" $ mempty
                                 "Banana stickers"
-                            H.span ! class_ "navbar-burger burger" ! dataAttribute "target" "navbarMenuHeroC" $ do
-                                H.span mempty
-                                H.span mempty
-                                H.span mempty
                         H.div ! A.id "navbarMenuHeroC" ! class_ "navbar-menu" $ H.div ! class_ "navbar-end" $ do
                             H.span ! class_ "navbar-item" $ H.div ! class_ "field" $ H.form ! action "/search" ! method "get" $ p ! class_ "control has-icons-left" $ do
                                 input ! class_ "input" ! type_ "text" ! A.name "keyword" ! placeholder "Search"
                                 H.span ! class_ "icon is-small is-left" $ i ! class_ "fas fa-search" $ mempty
                             a ! class_ "navbar-item" ! onclick "(function() {document.getElementById(\"addModal\").classList.add(\"is-active\");})();" $ H.span ! class_ "icon is-medium" $ i ! class_ "fas fa-lg fa-plus-square" $ mempty
-                            a ! class_ "navbar-item" $ H.div ! class_ "dropdown is-hoverable is-right" $ do
-                                H.div ! class_ "dropdown-trigger" $ H.span ! class_ "icon is-medium" $ i ! class_ "fas fa-lg fa-sign-in-alt" $ mempty
-                                H.div ! class_ "dropdown-menu" ! A.id "dropdown-menu4" $ H.div ! class_ "dropdown-content" $ H.div ! class_ "dropdown-item" $ do
-                                    H.div ! class_ "field" $ p ! class_ "control has-icons-left" $ do
-                                        input ! class_ "input is-small" ! type_ "text" ! placeholder "Name"
-                                        H.span ! class_ "icon is-small is-left" $ i ! class_ "fas fa-user" $ mempty
-                                    H.div ! class_ "field" $ p ! class_ "control has-icons-left" $ do
-                                        input ! class_ "input is-small" ! type_ "password" ! placeholder "Password"
-                                        H.span ! class_ "icon is-small is-left" $ i ! class_ "fas fa-lock" $ mempty
-                                    H.div ! class_ "field" $ p ! class_ "control" $ button ! class_ "button is-small is-warning is-fullwidth" $ "Login"
-                    H.div ! class_ "hero-body" $ H.div ! class_ "container" $ do
+                            -- loginDropdown
+
+heroBody :: [Sticker] -> Html
+heroBody stickers = H.div ! class_ "hero-body" $ H.div ! class_ "container" $ do
                         h1 ! class_ "title" $ "Banana Stickers Catalog"
                         h2 ! class_ "subtitle" $ "MI-AFP semestral project by Michal Klement"
                         nav ! class_ "level" $ do
@@ -141,8 +143,24 @@ getPage getContent stickers = S.html . renderHtml $ do
                             H.div ! class_ "level-item has-text-centered" $ H.div $ a ! href "/countries" $ do
                                 p ! class_ "heading" $ "Countries of origin"
                                 p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique country stickers
-                section ! class_ "section" $ H.div ! class_ "container is-desktop" $ getContent
-                H.div ! class_ "modal" ! A.id "addModal" $ do
+
+loginDropdown :: Html
+loginDropdown = a ! class_ "navbar-item" $ H.div ! class_ "dropdown is-hoverable is-right" $ do
+                    H.div ! class_ "dropdown-trigger" $ H.span ! class_ "icon is-medium" $ i ! class_ "fas fa-lg fa-sign-in-alt" $ mempty
+                    H.div ! class_ "dropdown-menu" ! A.id "dropdown-menu4" $ H.div ! class_ "dropdown-content" $ H.form ! action "/login" ! method"post" ! A.id "loginForm" $ H.div ! class_ "dropdown-item" $ do
+                        H.div ! class_ "field" $ p ! class_ "control has-icons-left" $ do
+                            input ! class_ "input is-small" ! type_ "text" ! name "name" ! placeholder "Name" ! required ""
+                            H.span ! class_ "icon is-small is-left" $ i ! class_ "fas fa-user" $ mempty
+                        H.div ! class_ "field" $ p ! class_ "control has-icons-left" $ do
+                            input ! class_ "input is-small" ! type_ "password" ! name "password" ! placeholder "Password" ! required ""
+                            H.span ! class_ "icon is-small is-left" $ i ! class_ "fas fa-lock" $ mempty
+                        H.div ! class_ "field" $ p ! class_ "control" $ button ! class_ "button is-small is-warning is-fullwidth" ! type_ "submit"! A.form "loginForm" $ "Login"
+
+bodyContainer :: Html -> Html
+bodyContainer bodyContainerContent = section ! class_ "section" $ H.div ! class_ "container is-desktop" $ bodyContainerContent
+
+addStickerModal :: Html
+addStickerModal = H.div ! class_ "modal" ! A.id "addModal" $ do
                     H.div ! class_ "modal-background" $ mempty
                     H.div ! class_ "modal-card" $ do
                         H.header ! class_ "modal-card-head" $ do
@@ -172,5 +190,7 @@ getPage getContent stickers = S.html . renderHtml $ do
                         footer ! class_ "modal-card-foot" $ do
                             button ! class_ "button is-success" ! type_ "submit" ! A.form "addForm" $ "Add"
                             button ! class_ "button" ! onclick "(function() {document.getElementById(\"addModal\").classList.remove(\"is-active\");})();" $ "Cancel"
-            --  FOOTER
-            footer ! class_ "footer" $ H.div ! class_ "container" $ H.div ! class_ "content has-text-centered" $ p $ a ! href "https://bulma.io" $ img ! src "https://bulma.io/images/made-with-bulma--semiblack.png" ! alt "Made with Bulma" ! width "128" ! height "24"
+
+-- footer html content
+footerContent :: Html
+footerContent = footer ! class_ "footer" $ H.div ! class_ "container" $ H.div ! class_ "content has-text-centered" $ p $ a ! href "https://bulma.io" $ img ! src "https://bulma.io/images/made-with-bulma--semiblack.png" ! alt "Made with Bulma" ! width "128" ! height "24"

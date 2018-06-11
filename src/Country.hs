@@ -73,19 +73,25 @@ countriesList = mconcat $ P.map (\x -> option $ toHtml $ Country.name x) countri
 countriesHtml :: [[String]] -> Html
 countriesHtml countries = table ! class_ "table is-striped is-narrow is-hoverable is-fullwidth" $ countriesContent countries
 
+countriesContent :: [[String]] -> Html
 countriesContent countries = mconcat $ P.map (\x -> countriesC x) countries
 
+countriesC :: [String] -> Html
 countriesC countries = do thead $ tr $ th $ toHtml $ firstLetter countries
                           tbody $ mapCountries countries
 
+mapCountries :: [String] -> Html
 mapCountries countries = mconcat $ P.map (\x -> mapC x) countries
 
+mapC :: String -> Html
 mapC country = tr $ td $ a ! class_ "link" ! href (toValue $ "/country/" ++ country) $ do
                    H.span ! class_ (toValue $ "flag-icon flag-icon-" ++ (countryCode country)) $ mempty
                    toHtml $ " " ++ country
 
+countryCode :: String -> String
 countryCode country = code where
                         code = Country.code $ c !! 0 where
                           c = filter (\x -> Country.name x == country) countries
 
+firstLetter :: [String] -> Char
 firstLetter countries = countries !! 0 !! 0
