@@ -2,17 +2,17 @@
 Module      : Country
 Description : Module with functionality for Country
 Copyright   : (c) Michal Klement, 2018
-License     : BSD3
+License     : MIT
 Maintainer  : klememi1@fit.cvut.cz
 
 This module includes constructor for data type Country, list of all available countries and functions which generate HTML for displaying countries page.
 -}
 {-# LANGUAGE OverloadedStrings #-}
-module Country(Country, countriesList, countriesHtml) where
+module Country(Country, countriesList, countriesHtml, countryCode) where
 
-import Text.Blaze.Html5 as H
+import Text.Blaze.Html5            as H
 import Text.Blaze.Html5.Attributes as A
-import Prelude as P
+import Prelude                     as P
 import HtmlGen
 
 -- |Data type representing Country

@@ -2,7 +2,7 @@
 Module      : Country
 Description : Module with functionality for Sticker
 Copyright   : (c) Michal Klement, 2018
-License     : BSD3
+License     : MIT
 Maintainer  : klememi1@fit.cvut.cz
 
 This module includes constructor for data type Sticker and fuctions which generate HTML pages displaying stickers.
@@ -10,11 +10,11 @@ This module includes constructor for data type Sticker and fuctions which genera
 {-# LANGUAGE OverloadedStrings #-}
 module Sticker(Sticker(Sticker, id, pic, brand, country, finder, note, tags), stickersContent) where
 
-import Text.Blaze.Html5 as H
+import Text.Blaze.Html5            as H
 import Text.Blaze.Html5.Attributes as A
-import Database.SQLite.Simple as SQL
+import Database.SQLite.Simple      as SQL
 import Data.List.Split
-import Prelude as P
+import Prelude                     as P
 
 -- |Data type representing sticker
 data Sticker = Sticker { id      :: Int    -- ^ unqiue id

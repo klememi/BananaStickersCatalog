@@ -2,9 +2,9 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c41ea4e1577d4218189745c4d5aaa8de4c7998967883dbb3f76158fa640d5765
+-- hash: 7267721463d36ef310f3c5142cdc2387959e3ef42298e924b0d523f42aed835f
 
-name:           Catalog
+name:           catalog
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/klememi1/BananaStickersCatalog#readme>
 homepage:       https://github.com/klememi/BananaStickersCatalog#readme
@@ -12,7 +12,7 @@ bug-reports:    https://github.com/klememi/BananaStickersCatalog/issues
 author:         Michal Klement
 maintainer:     klememi1@fit.cvut.cz
 copyright:      2018 Michal Klement
-license:        BSD3
+license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
@@ -38,6 +38,7 @@ library
     , split
     , sqlite-simple
     , text
+    , wai
     , wai-extra
     , wai-middleware-static
   exposed-modules:
@@ -48,7 +49,7 @@ library
       HtmlPage
       Sticker
   other-modules:
-      Paths_Catalog
+      Paths_catalog
   default-language: Haskell2010
 
 executable catalog
@@ -57,20 +58,21 @@ executable catalog
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      Catalog
-    , base >=4.7 && <5
+      base >=4.7 && <5
     , base64-bytestring
     , blaze-html
     , bytestring
+    , catalog
     , random
     , scotty
     , split
     , sqlite-simple
     , text
+    , wai
     , wai-extra
     , wai-middleware-static
   other-modules:
-      Paths_Catalog
+      Paths_catalog
   default-language: Haskell2010
 
 test-suite catalog-test
@@ -80,18 +82,23 @@ test-suite catalog-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      Catalog
-    , base >=4.7 && <5
+      base >=4.7 && <5
     , base64-bytestring
     , blaze-html
     , bytestring
+    , catalog
+    , hspec
+    , hspec-wai
     , random
     , scotty
     , split
     , sqlite-simple
     , text
+    , wai
     , wai-extra
     , wai-middleware-static
   other-modules:
-      Paths_Catalog
+      CatalogSpec
+      SupportSpec
+      Paths_catalog
   default-language: Haskell2010

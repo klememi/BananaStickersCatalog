@@ -2,17 +2,17 @@
 Module      : HtmlGen
 Description : Module with helper functions generating HTML
 Copyright   : (c) Michal Klement, 2018
-License     : BSD3
+License     : MIT
 Maintainer  : klememi1@fit.cvut.cz
 
 This module includes helper functions which generate HTML.
 -}
 {-# LANGUAGE OverloadedStrings #-}
-module HtmlGen(elementsHtml) where
+module HtmlGen(elementsHtml, firstLetter) where
 
-import Text.Blaze.Html5 as H
+import Text.Blaze.Html5            as H
 import Text.Blaze.Html5.Attributes as A
-import Prelude as P
+import Prelude                     as P
 
 -- |Generates HTML for all available elements
 elementsHtml :: (String -> Html) -- ^
@@ -30,4 +30,5 @@ elementsMap mapF list = do thead $ tr $ th $ toHtml $ firstLetter list
 -- |Gives first letter of list of elements
 firstLetter :: [String] -- ^ List of elements names to be processed
             -> Char     -- ^ The return value
+firstLetter []   = 'X'
 firstLetter list = list !! 0 !! 0

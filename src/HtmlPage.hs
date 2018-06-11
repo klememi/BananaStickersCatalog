@@ -2,25 +2,25 @@
 Module      : HtmlPage
 Description : Module with functions for rendering HTML pages
 Copyright   : (c) Michal Klement, 2018
-License     : BSD3
+License     : MIT
 Maintainer  : klememi1@fit.cvut.cz
 
 This module includes data constructor for different web pages as well as functions for rendering them.
 -}
 {-# LANGUAGE OverloadedStrings #-}
-module HtmlPage(Page(Index, Countries, Brands), renderPage, randomSample) where
+module HtmlPage(Page(Index, Countries, Brands), renderPage, randomSample, unique) where
 
-import Prelude as P
+import Prelude                                              as P
 import Country
 import Sticker
 import Brand
-import Web.Scotty as S
-import Text.Blaze.Html5 as H
-import Text.Blaze.Html5.Attributes as A
+import Web.Scotty                                           as S
+import Text.Blaze.Html5                                     as H
+import Text.Blaze.Html5.Attributes                          as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
-import Data.List(group, sort, groupBy)
-import System.Random (randomRIO)
-import Data.Monoid (mempty)
+import Data.List                     (group, sort, groupBy)
+import System.Random                 (randomRIO)
+import Data.Monoid                   (mempty)
 
 -- |Data type representing HTML page
 data Page = Index     -- ^ Page displaying stickers
@@ -54,25 +54,25 @@ unique element stickers = groupBy (\x y -> x !! 0 == y !! 0) $ P.map (\x -> x !!
 randomSample :: Int    -- ^ Size of the random sample
              -> [a]    -- ^ List for the random sample
              -> IO [a] -- ^ The return value
-randomSample 0 x = pure []
-randomSample k x = do
-   let m = P.min k (length x)
-   i <- randomRIO (0, length x - 1)
-   let (a, e:b) = splitAt i x
-   l <- randomSample (m-1) (a ++ b)
-   pure (e : l)
+randomSample 0 x  = pure []
+randomSample _ [] = pure []
+randomSample k x  = do let m = P.min k (length x)
+                       i <- randomRIO (0, length x - 1)
+                       let (a, e:b) = splitAt i x
+                       l <- randomSample (m-1) (a ++ b)
+                       pure (e : l)
 
 -- |Header HTML content
 headerContent :: Html
 headerContent = docTypeHtml ! lang "en" $ do
-            H.head $ do
-                meta ! charset "utf-8"
-                H.title "Banana Stickers Catalog"
-                meta ! A.name "description" ! content "Banana Stickers Catalog"
-                meta ! A.name "author" ! content "Michal Klement"
-                link ! rel "stylesheet" ! href "../css/bulma.css"
-                link ! rel "stylesheet" ! href "../css/flag-icon.css"
-                script ! defer "" ! src "https://use.fontawesome.com/releases/v5.0.13/js/all.js" $ mempty
+                    H.head $ do
+                        meta ! charset "utf-8"
+                        H.title "Banana Stickers Catalog"
+                        meta ! A.name "description" ! content "Banana Stickers Catalog"
+                        meta ! A.name "author" ! content "Michal Klement"
+                        link ! rel "stylesheet" ! href "../css/bulma.css"
+                        link ! rel "stylesheet" ! href "../css/flag-icon.css"
+                        script ! defer "" ! src "https://use.fontawesome.com/releases/v5.0.13/js/all.js" $ mempty
 
 -- |Body HTML content
 bodyContent :: Html      -- ^ HTML content to be displayed in the body of the page
