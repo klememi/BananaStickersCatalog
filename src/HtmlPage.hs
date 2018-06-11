@@ -1,89 +1,59 @@
+{-|
+Module      : HtmlPage
+Description : Module with functions for rendering HTML pages
+Copyright   : (c) Michal Klement, 2018
+License     : BSD3
+Maintainer  : klememi1@fit.cvut.cz
+
+This module includes data constructor for different web pages as well as functions for rendering them.
+-}
 {-# LANGUAGE OverloadedStrings #-}
-module Banana(catalog) where
+module HtmlPage(Page(Index, Countries, Brands), renderPage, randomSample) where
 
 import Prelude as P
 import Country
-import Sticker as ST
+import Sticker
 import Brand
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import Data.Monoid (mempty)
-import Control.Monad.IO.Class (liftIO)
-import Data.List(group, sort, groupBy)
-import Database.SQLite.Simple as SQL
+import Web.Scotty as S
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.Text (renderHtml)
-import Web.Scotty as S
-import Network.Wai.Middleware.Static
-import qualified Data.ByteString.Base64 as B64
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.Char8 as C8
-import Network.Wai.Parse
+import Data.List(group, sort, groupBy)
 import System.Random (randomRIO)
-import System.IO.Unsafe
+import Data.Monoid (mempty)
 
-data Page = Index
-          | Countries
-          | Brands
+-- |Data type representing HTML page
+data Page = Index     -- ^ Page displaying stickers
+          | Countries -- ^ Page displaying countries list
+          | Brands    -- ^ Page displaying brands list
 
-catalog :: IO()
-catalog = do
-    conn <- SQL.open "stickers.db"
-    scotty 3000 $ do
-        middleware $ staticPolicy (noDots >-> addBase "static")
-        get "/" $ do
-            stickers <- liftIO $ query_ conn "select * from stickers"
-            let randomS = unsafePerformIO $ randomSample 15 stickers
-            renderPage Index randomS
-        get "/brands" $ do
-            stickers <- liftIO $ query_ conn "select * from stickers"
-            renderPage Brands stickers
-        get "/countries" $ do
-            stickers <- liftIO $ query_ conn "select * from stickers"
-            renderPage Countries stickers
-        post "/addSticker" $ do
-            brand   <- S.param "brand"
-            country <- S.param "country"
-            finder  <- S.param "finder"
-            note    <- S.param "note"
-            fs      <- files
-            let pics       = [fileContent fi | (_, fi) <- fs]
-            let pic        = BL.toStrict $ pics !! 0
-            let encodedPic = C8.unpack $ B64.encode pic
-            let tags       = "tag"
-            liftIO $ execute conn "insert into stickers(pic, brand, country, founder, note, tags) values (?, ?, ?, ?, ?, ?)" (encodedPic :: String, brand :: String, country :: String, finder :: String, note :: String, tags :: String)
-            S.redirect "/"
-        get "/country/:country" $ do
-            country <- S.param "country"
-            stickers <- liftIO $ query conn "select * from stickers where country = ?" [country :: String]
-            renderPage Index stickers
-        get "/brand/:brand" $ do
-            brand <- S.param "brand"
-            stickers <- liftIO $ query conn "select * from stickers where brand = ?" [brand :: String]
-            renderPage Index stickers
-        get "/search" $ do
-            keyword <- S.param "keyword"
-            stickers <- liftIO $ queryNamed conn "select * from stickers where brand = :k or country = :k or founder = :k or note = :k" [":k" := (keyword :: String)]
-            renderPage Index stickers
-    close conn
-
-renderPage :: Page -> [Sticker] -> ActionM()
+-- |Renders a web page
+renderPage :: Page      -- ^ Page to be rendered
+           -> [Sticker] -- ^ List of stickers to be processed
+           -> ActionM() -- ^ The return value
 renderPage Index stickers     = getPage (stickersContent stickers) stickers
 renderPage Countries stickers = getPage (countriesHtml $ unique country stickers) stickers
 renderPage Brands stickers    = getPage (brandsHtml $ unique brand stickers) stickers
 
-getPage :: Html -> [Sticker] -> ActionM()
+-- |Prepares a page for rendering
+getPage :: Html      -- ^ HTML content to be displayed in the body of the page
+        -> [Sticker] -- ^ List of stickers to be processed
+        -> ActionM() -- ^ The return value
 getPage bodyContainerContent stickers = S.html . renderHtml $ do
                                             headerContent
                                             bodyContent bodyContainerContent stickers
                                             footerContent
 
-unique :: (Sticker -> String) -> [Sticker] -> [[String]]
+-- |Makes a list of unique elements from a list grouped by the first letter
+unique :: (Sticker -> String) -- ^ Element of the sticker to be returned
+       -> [Sticker]           -- ^ List of stickers to be processed
+       -> [[String]]          -- ^ The return value
 unique element stickers = groupBy (\x y -> x !! 0 == y !! 0) $ P.map (\x -> x !! 0) $ group $ sort $ P.map element stickers
 
-randomSample :: Int -> [a] -> IO [a]
+-- |Makes a random sample from given list
+randomSample :: Int    -- ^ Size of the random sample
+             -> [a]    -- ^ List for the random sample
+             -> IO [a] -- ^ The return value
 randomSample 0 x = pure []
 randomSample k x = do
    let m = P.min k (length x)
@@ -92,7 +62,7 @@ randomSample k x = do
    l <- randomSample (m-1) (a ++ b)
    pure (e : l)
 
--- header html content
+-- |Header HTML content
 headerContent :: Html
 headerContent = docTypeHtml ! lang "en" $ do
             H.head $ do
@@ -104,18 +74,23 @@ headerContent = docTypeHtml ! lang "en" $ do
                 link ! rel "stylesheet" ! href "../css/flag-icon.css"
                 script ! defer "" ! src "https://use.fontawesome.com/releases/v5.0.13/js/all.js" $ mempty
 
--- body html content
-bodyContent :: Html -> [Sticker] -> Html
+-- |Body HTML content
+bodyContent :: Html      -- ^ HTML content to be displayed in the body of the page
+            -> [Sticker] -- ^ List of stickers to be processed
+            -> Html      -- ^ The return value
 bodyContent bodyContainerContent stickers = H.body $ do
                                                 heroSection stickers
                                                 bodyContainer bodyContainerContent
                                                 addStickerModal
 
-heroSection :: [Sticker] -> Html
+-- |Bulma Hero HTML section
+heroSection :: [Sticker] -- ^ List of stickers to be processed
+            -> Html      -- ^ The return value
 heroSection stickers = section ! class_ "hero is-warning is-bold" $ do
                             heroHeader
                             heroBody stickers
 
+-- |Bulma Hero header HTML content
 heroHeader :: Html
 heroHeader = H.div ! class_ "hero-head" $ H.header ! class_ "navbar" $ H.div ! class_ "container" $ do
                         H.div ! class_ "navbar-brand" $ do
@@ -129,7 +104,9 @@ heroHeader = H.div ! class_ "hero-head" $ H.header ! class_ "navbar" $ H.div ! c
                             a ! class_ "navbar-item" ! onclick "(function() {document.getElementById(\"addModal\").classList.add(\"is-active\");})();" $ H.span ! class_ "icon is-medium" $ i ! class_ "fas fa-lg fa-plus-square" $ mempty
                             -- loginDropdown
 
-heroBody :: [Sticker] -> Html
+-- |Bulma Hero body HTML content
+heroBody :: [Sticker] -- ^ List of stickers to be processed
+         -> Html      -- ^ The return value
 heroBody stickers = H.div ! class_ "hero-body" $ H.div ! class_ "container" $ do
                         h1 ! class_ "title" $ "Banana Stickers Catalog"
                         h2 ! class_ "subtitle" $ "MI-AFP semestral project by Michal Klement"
@@ -144,6 +121,7 @@ heroBody stickers = H.div ! class_ "hero-body" $ H.div ! class_ "container" $ do
                                 p ! class_ "heading" $ "Countries of origin"
                                 p ! class_ "title" $ toHtml $ show $ sum $ P.map (\x -> length x) $ unique country stickers
 
+-- |Login dropdown HTML
 loginDropdown :: Html
 loginDropdown = a ! class_ "navbar-item" $ H.div ! class_ "dropdown is-hoverable is-right" $ do
                     H.div ! class_ "dropdown-trigger" $ H.span ! class_ "icon is-medium" $ i ! class_ "fas fa-lg fa-sign-in-alt" $ mempty
@@ -156,9 +134,12 @@ loginDropdown = a ! class_ "navbar-item" $ H.div ! class_ "dropdown is-hoverable
                             H.span ! class_ "icon is-small is-left" $ i ! class_ "fas fa-lock" $ mempty
                         H.div ! class_ "field" $ p ! class_ "control" $ button ! class_ "button is-small is-warning is-fullwidth" ! type_ "submit"! A.form "loginForm" $ "Login"
 
-bodyContainer :: Html -> Html
+-- |Body HTML container
+bodyContainer :: Html -- ^ HTML content to be displayed in the body
+              -> Html -- ^ The return value
 bodyContainer bodyContainerContent = section ! class_ "section" $ H.div ! class_ "container is-desktop" $ bodyContainerContent
 
+-- |HTML modal container for adding sitckers
 addStickerModal :: Html
 addStickerModal = H.div ! class_ "modal" ! A.id "addModal" $ do
                     H.div ! class_ "modal-background" $ mempty
@@ -191,6 +172,6 @@ addStickerModal = H.div ! class_ "modal" ! A.id "addModal" $ do
                             button ! class_ "button is-success" ! type_ "submit" ! A.form "addForm" $ "Add"
                             button ! class_ "button" ! onclick "(function() {document.getElementById(\"addModal\").classList.remove(\"is-active\");})();" $ "Cancel"
 
--- footer html content
+-- |Footer HTML content
 footerContent :: Html
 footerContent = footer ! class_ "footer" $ H.div ! class_ "container" $ H.div ! class_ "content has-text-centered" $ p $ a ! href "https://bulma.io" $ img ! src "https://bulma.io/images/made-with-bulma--semiblack.png" ! alt "Made with Bulma" ! width "128" ! height "24"

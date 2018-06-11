@@ -1,14 +1,26 @@
+{-|
+Module      : Country
+Description : Module with functionality for Country
+Copyright   : (c) Michal Klement, 2018
+License     : BSD3
+Maintainer  : klememi1@fit.cvut.cz
+
+This module includes constructor for data type Country, list of all available countries and functions which generate HTML for displaying countries page.
+-}
 {-# LANGUAGE OverloadedStrings #-}
 module Country(Country, countriesList, countriesHtml) where
 
 import Text.Blaze.Html5 as H
 import Text.Blaze.Html5.Attributes as A
 import Prelude as P
+import HtmlGen
 
-data Country = Country { name :: String
-                       , code :: String
+-- |Data type representing Country
+data Country = Country { name :: String -- ^ Name of the country
+                       , code :: String -- ^ Code of the country
                        }
 
+-- |List of available countries
 countries :: [Country]
 countries = [ Country "Argentina" "ar",
               Country "Australia" "au",
@@ -67,31 +79,25 @@ countries = [ Country "Argentina" "ar",
               Country "Venezuela" "ve"
             ]
 
+-- |Generates option for select input
 countriesList :: Html
 countriesList = mconcat $ P.map (\x -> option $ toHtml $ Country.name x) countries
 
-countriesHtml :: [[String]] -> Html
-countriesHtml countries = table ! class_ "table is-striped is-narrow is-hoverable is-fullwidth" $ countriesContent countries
+-- |Generates HTML for all available countries
+countriesHtml :: [[String]] -- ^ List of lists of countries grouped by the first letter
+              -> Html       -- ^ The return value
+countriesHtml countries = (elementsHtml mapC) countries
 
-countriesContent :: [[String]] -> Html
-countriesContent countries = mconcat $ P.map (\x -> countriesC x) countries
-
-countriesC :: [String] -> Html
-countriesC countries = do thead $ tr $ th $ toHtml $ firstLetter countries
-                          tbody $ mapCountries countries
-
-mapCountries :: [String] -> Html
-mapCountries countries = mconcat $ P.map (\x -> mapC x) countries
-
-mapC :: String -> Html
+-- |Generates HTML for a single country
+mapC :: String -- ^ Country name
+     -> Html   -- ^ The return value
 mapC country = tr $ td $ a ! class_ "link" ! href (toValue $ "/country/" ++ country) $ do
                    H.span ! class_ (toValue $ "flag-icon flag-icon-" ++ (countryCode country)) $ mempty
                    toHtml $ " " ++ country
 
-countryCode :: String -> String
+-- |Return the country code
+countryCode :: String -- ^ Country name
+            -> String -- ^ The return value
 countryCode country = code where
                         code = Country.code $ c !! 0 where
                           c = filter (\x -> Country.name x == country) countries
-
-firstLetter :: [String] -> Char
-firstLetter countries = countries !! 0 !! 0

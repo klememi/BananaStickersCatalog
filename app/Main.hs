@@ -1,6 +1,6 @@
 module Main where
 
-import Banana
+import Catalog
 
 main :: IO ()
 main = catalog
