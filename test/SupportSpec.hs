@@ -52,7 +52,7 @@ sticker5 = Sticker { Sticker.id = 5,
                      tags       = "tag1"
                    }
 
-stickers = [ sticker1, sticker2, sticker3, sticker4, sticker5 ]
+stickers = [ sticker1, sticker2, sticker3, sticker4, sticker5, sticker4, sticker5 ]
 
 spec :: Spec
 spec = do
