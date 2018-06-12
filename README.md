@@ -6,9 +6,16 @@ If you start to collect things like banana stickers you might want to organize t
 
 *This project was made as a semestral project for Applied Functional Programming (MI-AFP) at FIT CTU in Prague.*
 
+## Screenshots
+
+<img src="res/screen1.png" width="400">
+
+<img src="res/screen2.png" width="400">
+
 ## Features
 
-- showing collectibles from database
+- index page showing 10 random stickers from database
+- filtering collectibles by attributes
 - adding new stickers
 - showing detail info of stickers
 - searching for sticker by attributes
