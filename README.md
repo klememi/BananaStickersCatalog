@@ -19,7 +19,9 @@ If you start to collect things like banana stickers you might want to organize t
 - visual customization
 - security
 - database export & import
-- admin account
+- admin account for adding stickers
+- better searching
+- improved adding new stickers
 
 ## Installation
 

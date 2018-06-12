@@ -21,7 +21,6 @@ import           Database.SQLite.Simple          as SQL
 import           Web.Scotty                      as S
 import           Network.Wai.Middleware.Static
 import           Network.Wai.Parse
-import           System.IO.Unsafe
 
 -- |Main web application responding to requests
 catalog :: IO ()
@@ -34,15 +33,14 @@ scottyCatalogApp :: Connection -- ^ SQLite database connection
                  -> ScottyM () -- ^ The return value
 scottyCatalogApp conn = do  middleware $ staticPolicy (noDots >-> addBase "static")
                             get "/" $ do
-                                stickers   <- liftIO $ query_ conn "select * from stickers"
-                                let randomS = unsafePerformIO $ randomSample 15 stickers
-                                renderPage HP.Index randomS
+                                stickers <- liftIO $ query_ conn "select * from stickers"
+                                renderPage Index stickers
                             get "/brands" $ do
                                 stickers <- liftIO $ query_ conn "select * from stickers"
-                                renderPage HP.Brands stickers
+                                renderPage Brands stickers
                             get "/countries" $ do
                                 stickers <- liftIO $ query_ conn "select * from stickers"
-                                renderPage HP.Countries stickers
+                                renderPage Countries stickers
                             post "/addSticker" $ do
                                 brand   <- S.param "brand"
                                 country <- S.param "country"
@@ -58,12 +56,12 @@ scottyCatalogApp conn = do  middleware $ staticPolicy (noDots >-> addBase "stati
                             get "/country/:country" $ do
                                 country  <- S.param "country"
                                 stickers <- liftIO $ query conn "select * from stickers where country = ?" [country :: String]
-                                renderPage HP.Index stickers
+                                renderPage Type stickers
                             get "/brand/:brand" $ do
                                 brand    <- S.param "brand"
                                 stickers <- liftIO $ query conn "select * from stickers where brand = ?" [brand :: String]
-                                renderPage HP.Index stickers
+                                renderPage Type stickers
                             get "/search" $ do
                                 keyword  <- S.param "keyword"
                                 stickers <- liftIO $ queryNamed conn "select * from stickers where brand = :k or country = :k or founder = :k or note = :k" [":k" := (keyword :: String)]
-                                renderPage HP.Index stickers
+                                renderPage Type stickers

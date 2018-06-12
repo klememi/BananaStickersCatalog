@@ -8,7 +8,7 @@ Maintainer  : klememi1@fit.cvut.cz
 This module includes data constructor for different web pages as well as functions for rendering them.
 -}
 {-# LANGUAGE OverloadedStrings #-}
-module HtmlPage(Page(Index, Countries, Brands), renderPage, randomSample, unique) where
+module HtmlPage(Page(Index, Countries, Brands, Type), renderPage, randomSample, unique) where
 
 import Prelude                                              as P
 import Country
@@ -21,19 +21,22 @@ import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Data.List                     (group, sort, groupBy)
 import System.Random                 (randomRIO)
 import Data.Monoid                   (mempty)
+import System.IO.Unsafe
 
 -- |Data type representing HTML page
 data Page = Index     -- ^ Page displaying stickers
           | Countries -- ^ Page displaying countries list
           | Brands    -- ^ Page displaying brands list
+          | Type      -- ^ Page displaying stickers of a single brand or country
 
 -- |Renders a web page
 renderPage :: Page      -- ^ Page to be rendered
            -> [Sticker] -- ^ List of stickers to be processed
            -> ActionM() -- ^ The return value
-renderPage Index stickers     = getPage (stickersContent stickers) stickers
+renderPage Index stickers     = getPage (stickersContent $ unsafePerformIO $ randomSample 10 stickers) stickers
 renderPage Countries stickers = getPage (countriesHtml $ unique country stickers) stickers
 renderPage Brands stickers    = getPage (brandsHtml $ unique brand stickers) stickers
+renderPage Type stickers      = getPage (stickersContent stickers) stickers
 
 -- |Prepares a page for rendering
 getPage :: Html      -- ^ HTML content to be displayed in the body of the page
