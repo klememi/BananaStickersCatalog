@@ -1,4 +1,6 @@
-# Banana Sticker Catalog
+# Banana Sticker Catalog 
+
+[![Build Status](https://travis-ci.org/klememi/BananaStickersCatalog.svg?branch=master)](https://travis-ci.org/klememi/BananaStickersCatalog)
 
 If you start to collect things like banana stickers you might want to organize them well. This web application brings you opportunity to organize your collectibles and search in it simple and fast. Have you found a new sticker but you are not sure if you already have it in your collection? You can figure it out with this application simply.
 
@@ -29,6 +31,8 @@ If you start to collect things like banana stickers you might want to organize t
 6. generate documentation `stack haddock`
 7. run the application `stack exec catalog`
 8. open web browser `localhost:3000`
+
+*Example SQLite database is included as* `stickers.db` *file. If you want to delete all records from the database run* `./resetDb.sh` *from the project directory (you need to have* `sqlite3` *installed).*
 
 ## Special thanks to
 
