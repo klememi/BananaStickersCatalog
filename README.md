@@ -8,9 +8,7 @@ If you start to collect things like banana stickers you might want to organize t
 
 ## Screenshots
 
-<img src="res/screen1.png" width="400">
-
-<img src="res/screen2.png" width="400">
+<img src="res/screen1.png" width="400"> <img src="res/screen2.png" width="400">
 
 ## Features
 
@@ -39,11 +37,11 @@ If you start to collect things like banana stickers you might want to organize t
 5. run tests `stack test`
 6. generate documentation `stack haddock`
 7. run the application `stack exec catalog`
-8. open web browser `localhost:3000`
+8. open in web browser `localhost:3000`
 
 *Example SQLite database is included as* `stickers.db` *file. If you want to delete all records from the database run* `./resetDb.sh` *from the project directory (you need to have* `sqlite3` *installed).*
 
-## Special thanks to
+## This project uses
 
 [<img src="https://bulma.io/images/made-with-bulma.png" width="128" height="24">](https://bulma.io)
 
